@@ -41,20 +41,24 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ onChange, initialValue }) => {
     // get current value from editor
     const unformatted = editorRef.current.getModel().getValue();
 
-    // format that value
-    const formatted = prettier
-      .format(unformatted, {
-        parser: 'babel',
-        plugins: [parser],
-        useTabs: false,
-        semi: true,
-        singleQuote: true,
-      })
-      .replace(/\n$/, '');
-
-    // set the formatted value back in the editor
-    editorRef.current.setValue(formatted);
-  };
+    try {
+      // format that value
+      const formatted = prettier
+        .format(unformatted, {
+          parser: 'babel',
+          plugins: [parser],
+          useTabs: false,
+          semi: true,
+          singleQuote: true,
+        })
+        .replace(/\n$/, '');
+  
+      // set the formatted value back in the editor
+      editorRef.current.setValue(formatted);
+      } catch(err) {
+        console.error(err);
+      }
+    };
 
   return (
     <div className="editor-wrapper">

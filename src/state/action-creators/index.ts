@@ -1,4 +1,5 @@
 import { Dispatch } from 'redux';
+import initcell from '../../initcell'
 import { ActionType } from '../action-types';
 import {
   UpdateCellAction,
@@ -8,8 +9,16 @@ import {
   Direction,
   Action,
 } from '../actions';
-import { CellTypes } from '../cell';
+import { Cell, CellTypes } from '../cell';
 import bundle from '../../bundler';
+import { RootState } from '../reducers';
+
+import localForage from 'localforage';
+
+const cellsCache = localForage.createInstance({
+  name: 'cellscache',
+});
+
 
 export const updateCell = (id: string, content: string): UpdateCellAction => {
   return {
@@ -69,5 +78,49 @@ export const createBundle = (cellId: string, input: string) => {
         bundle: result,
       },
     });
+  };
+};
+
+export const fetchCells = () => {
+  return async (dispatch: Dispatch<Action>) => {
+    dispatch({ type: ActionType.FETCH_CELLS });
+
+    try {
+      let cachedResult = await cellsCache.getItem<Cell[]>(
+        "cells"
+      );
+      
+
+      if(!cachedResult) cachedResult = initcell as Cell[];
+      
+      dispatch({
+        type: ActionType.FETCH_CELLS_COMPLETE,
+        payload: cachedResult,
+      });
+    } catch (err) {
+      dispatch({
+        type: ActionType.FETCH_CELLS_ERROR,
+        payload: err.message,
+      });
+    }
+  };
+};
+
+export const saveCells = () => {
+  return async (dispatch: Dispatch<Action>, getState: () => RootState) => {
+    const {
+      cells: { data, order },
+    } = getState();
+
+    const cells = order.map((id) => data[id]);
+
+    try {
+      await cellsCache.setItem( "cells", cells);
+    } catch (err) {
+      dispatch({
+        type: ActionType.SAVE_CELLS_ERROR,
+        payload: err.message,
+      });
+    }
   };
 };
