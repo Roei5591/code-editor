@@ -12,12 +12,7 @@ import {
 import { Cell, CellTypes } from '../cell';
 import bundle from '../../bundler';
 import { RootState } from '../reducers';
-
-import localForage from 'localforage';
-
-const cellsCache = localForage.createInstance({
-  name: 'cellscache',
-});
+import base64url from 'base64-url';
 
 
 export const updateCell = (id: string, content: string): UpdateCellAction => {
@@ -86,16 +81,22 @@ export const fetchCells = () => {
     dispatch({ type: ActionType.FETCH_CELLS });
 
     try {
-      let cachedResult = await cellsCache.getItem<Cell[]>(
-        "cells"
-      );
+      const urlParams = new URLSearchParams(window.location.search);
+      const cellParam = urlParams.get('cells');
       
-
-      if(!cachedResult) cachedResult = initcell as Cell[];
+      let cells;
+      if(cellParam) {
+        const decodedCells =  base64url.decode(cellParam);
+        //console.log(decodedCells)
+        cells =  JSON.parse(decodedCells) as Cell[]
+        console.log(cells)
+      } else {
+        cells = initcell as Cell[];
+      }
       
       dispatch({
         type: ActionType.FETCH_CELLS_COMPLETE,
-        payload: cachedResult,
+        payload: cells,
       });
     } catch (err) {
       dispatch({
@@ -115,7 +116,10 @@ export const saveCells = () => {
     const cells = order.map((id) => data[id]);
 
     try {
-      await cellsCache.setItem( "cells", cells);
+
+      const encodeCells = base64url.encode(JSON.stringify(cells))
+      window.history.replaceState(null, '', "?cells=" + encodeCells)
+      
     } catch (err) {
       dispatch({
         type: ActionType.SAVE_CELLS_ERROR,
@@ -124,3 +128,4 @@ export const saveCells = () => {
     }
   };
 };
+

@@ -15,6 +15,7 @@ interface CodeCellProps {
 const CodeCell: React.FC<CodeCellProps> = ({ cell }) => {
   const { updateCell, createBundle } = useActions();
   const bundle = useTypedSelector((state) => state.bundles[cell.id]);
+  const index = useTypedSelector((state) => state.cells.order.indexOf(cell.id));
   const cumulativeCode = useCumulativeCode(cell.id);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ const CodeCell: React.FC<CodeCellProps> = ({ cell }) => {
       clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cumulativeCode, cell.id, createBundle]);
+  }, [cumulativeCode, cell.id, createBundle, index]);
 
   return (
     <Resizable direction="vertical">
